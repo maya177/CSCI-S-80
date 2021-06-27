@@ -3,6 +3,7 @@ Tic Tac Toe Player
 """
 
 import math
+import copy
 
 X = "X"
 O = "O"
@@ -22,55 +23,55 @@ def player(board):
     """
     Returns player who has the next turn on a board.
     """
-    numX, numO = 0, 0
-    for row in board:
-        for cell in row:
-            if cell == X:
-                numX += 1
-            elif cell == O:
-                numO += 1
-    
-    if numX > numO:
+    Xnum = 0
+    Onum = 0
+
+    #keeps track of what player moves where on the board
+    for i in range(0, len(board)):
+        for j in range(0, len(board[0])):
+            if board[i][j] == X:
+                Xnum += 1
+            elif board[i][j] == O:
+                Onum += 1
+
+    #keeping track of whose turn it is
+    if Xnum > Onum:
         return O
-    elif not terminal(board) and numX == numO:
-        return X
     else:
-        return None
+        return X
 
 
 def actions(board):
     """
     Returns set of all possible actions (i, j) available on the board.
     """
-    result = set()
-    for i in range(3):
-        for j in range(3):
+    #assigns all possible actions to a set
+    possibleActions = set()
+
+    for i in range(0, len(board)):
+        for j in range(0, len(board[0])):
             if board[i][j] == EMPTY:
-                result.add[i][j]
-    return result
+                possibleActions.add((i, j))
+
+    return possibleActions
 
 
 def result(board, action):
     """
     Returns the board that results from making move (i, j) on the board.
     """
-    if terminal(board):
-        raise ValueError("Game over.")
-    elif action not in actions(board):
-        raise ValueError("Invalid action.")
-    else:
-        playr = player(board)
-        result_board = copy.deepcopy(board)
-        (i, j) = action
-        result_board[i][j] = playr
+    # This creates a new board (state) without modifying the original
+    result = copy.deepcopy(board)
+    result[action[0]][action[1]] = player(board)
+    return result
 
-    return result_board
 
 def winner(board):
     """
     Returns the winner of the game, if there is one.
     """
 
+    # These are all the posisble pattterns needed to win (horizontal, vertical, diagonal)
     if board[0][0] == board[0][1] == board[0][2] != None:
         if board[0][0] == X:
             return X
@@ -114,74 +115,80 @@ def winner(board):
     else:
         return None
 
+
 def terminal(board):
     """
     Returns True if game is over, False otherwise.
     """
-
+     #(goal) check to see if a player has won
+    if winner(board) != None:
+        return True
+    #checks if all cells are filled in (tie)
     for row in board:
         for cell in row:
             if cell == EMPTY:
                 return False
-
-    if winner(board) != None:
-        return True
+    return True
 
 def utility(board):
     """
     Returns 1 if X has won the game, -1 if O has won, 0 otherwise.
     """
-    won = winner(board)
-    if won == X:
-        return 1
-    elif won == O:
-        return -1
-    else:
-        return 0
+    #assigns values to X winning, O winning or a draw
+    if terminal(board):
+        if winner(board) == X:
+            return 1
+        elif winner(board) == O:
+            return -1
+        else:
+            return 0
 
 def minimax(board):
     """
     Returns the optimal action for the current player on the board.
     """
-    plyr= player(board)
 
-    # If empty board is provided as input, return corner.
-    if board == [[EMPTY]*3]*3:
-        return (0,0)
-
-    if plyr == X:
-        v = float("-inf")
-        selected_action = None
-        for action in actions(board):
-            minValueResult = minValue(result(board, action))
-            if minValueResult > v:
-                v = minValueResult
-                selected_action = action
-    elif plyr == O:
-        v = float("inf")
-        selected_action = None
-        for action in actions(board):
-            maxValueResult = maxValue(result(board, action))
-            if maxValueResult < v:
-                v = maxValueResult
-                selected_action = action
-
-    return selected_action
-    
-def maxValue(board):
+    #each player is either a maximising or minimising player
+    #returns optimal move against opposing player
     if terminal(board):
-        return utility(board)
-    v = float("-inf")
-    for action in actions(board):
-        v = max(v, minValue(result(board, action)))
-    
-    return v
+        return None
+    else:
+        if player(board) == X:
+            value, move = max_value(board)
+            return move
+        else:
+            value, move = min_value(board)
+            return move
 
-def minValue(board):
+#provides the maximising player an optimal action
+def max_value(board):
     if terminal(board):
-        return utility(board)
-    v = float("inf")
+        return utility(board), None
+    v = float('-inf')
+    move = None
     for action in actions(board):
-        v = min(v, maxValue(result(board, action)))
+        aux, act = min_value(result(board, action))
+        if aux > v:
+            v = aux
+            move = action
+            if v == 1:
+                return v, move
 
-    return v
+    return v, move
+
+#provides the maximising player an optimal action
+def min_value(board):
+    if terminal(board):
+        return utility(board), None
+    v = float('inf')
+    move = None
+    for action in actions(board):
+        aux, act = max_value(result(board, action))
+        if aux < v:
+            v = aux
+            move = action
+            if v == -1:
+                return v, move
+
+    return v, move
+    
